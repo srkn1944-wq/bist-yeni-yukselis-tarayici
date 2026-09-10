@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#111827">
+<title>BIST Yeni Yükseliş Tarayıcı</title>
+<link rel="manifest" href="/manifest.json">
+<style>
+:root{--bg:#0b1020;--card:#121a2d;--line:#26324b;--text:#e5edf8;--muted:#8fa0bb;--green:#29d391;--red:#ff6174;--yellow:#ffc857;--blue:#55a7ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial}
+header{position:sticky;top:0;z-index:5;background:#0b1020e8;backdrop-filter:blur(12px);padding:14px 16px;border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0 0 4px}.sub{font-size:12px;color:var(--muted)}
+nav{display:flex;gap:8px;overflow:auto;padding:12px 16px}.tab{border:1px solid var(--line);background:var(--card);color:var(--text);border-radius:10px;padding:9px 12px;white-space:nowrap}
+.tab.active{outline:2px solid var(--blue)}
+main{padding:0 12px 28px}.hero{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.kpi{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px}.kpi b{font-size:20px;display:block}.kpi span{font-size:11px;color:var(--muted)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}.card h2{font-size:14px;margin:0;padding:12px;border-bottom:1px solid var(--line)}
+.tableWrap{overflow:auto;max-height:70vh}table{width:100%;border-collapse:collapse;min-width:970px;font-size:12px}th,td{padding:9px 8px;border-bottom:1px solid #1d2740;text-align:right;white-space:nowrap}th:first-child,td:first-child{text-align:left;position:sticky;left:0;background:var(--card);z-index:2}th{position:sticky;top:0;background:#18223a;z-index:1}
+.good{color:var(--green);font-weight:700}.bad{color:var(--red);font-weight:700}.warn{color:var(--yellow);font-weight:700}.pill{padding:4px 7px;border-radius:999px;border:1px solid var(--line);font-size:11px}
+@media(max-width:700px){.hero{grid-template-columns:repeat(2,1fr)}header{padding-top:max(14px,env(safe-area-inset-top))}}
+</style>
+</head>
+<body>
+<header><h1>BIST • Yeni Yükseliş Tarayıcı</h1><div class="sub" id="status">Veri hazırlanıyor…</div></header>
+<nav>
+<button class="tab active" data-tab="newRise">🚀 Yeni Yükseliş</button>
+<button class="tab" data-tab="volume">🔥 Hacim Patlaması</button>
+<button class="tab" data-tab="strong">✅ Güçlü AL</button>
+<button class="tab" data-tab="gainers">📈 Günün Yükselenleri</button>
+<button class="tab" data-tab="losers">📉 Günün Düşenleri</button>
+</nav>
+<main>
+<section class="hero">
+<div class="kpi"><b id="k1">-</b><span>Tarama kapsamı</span></div>
+<div class="kpi"><b id="k2">-</b><span>Yeni yükseliş</span></div>
+<div class="kpi"><b id="k3">-</b><span>Hacim ≥ 1.5x</span></div>
+<div class="kpi"><b id="k4">-</b><span>Güçlü skor ≥ 70</span></div>
+</section>
+<section class="card"><h2 id="title">Yeni yükselişe geçenler</h2><div class="tableWrap"><table>
+<thead><tr><th>Hisse</th><th>Fiyat</th><th>Gün %</th><th>Hacim Oranı</th><th>RSI</th><th>Momentum</th><th>ADX</th><th>Alış Baskısı</th><th>Trend</th><th>Puan</th><th>Durum</th></tr></thead>
+<tbody id="tbody"><tr><td colspan="11">Yükleniyor…</td></tr></tbody>
+</table></div></section>
+</main>
+<script>
+let DATA=null, current="newRise";
+const titles={newRise:"🚀 Yeni yükselişe geçenler",volume:"🔥 Hacim patlaması",strong:"✅ Güçlü AL",gainers:"📈 Günün en çok yükselenleri",losers:"📉 Günün en çok düşenleri"};
+const fmt=(v,d=2)=>v==null?"-":Number(v).toFixed(d);
+function cls(v){return v>0?"good":v<0?"bad":""}
+function stateCls(s){return s.includes("YÜKSELİŞ")||s.includes("AL")?"good":s.includes("ZAYIF")?"bad":"warn"}
+function render(){
+ if(!DATA)return;
+ document.querySelector("#title").textContent=titles[current];
+ const arr=(DATA[current]||[]).slice(0,100);
+ document.querySelector("#tbody").innerHTML=arr.length?arr.map(x=>`<tr>
+ <td><b>${x.symbol}</b></td><td>${fmt(x.price)}</td><td class="${cls(x.dayPct)}">${x.dayPct>0?"+":""}${fmt(x.dayPct)}%</td>
+ <td class="${(x.volumeRatio||0)>=1.5?"good":""}">${fmt(x.volumeRatio)}x</td><td>${fmt(x.rsi,1)}</td>
+ <td class="${cls(x.momentum)}">${x.momentum>0?"+":""}${fmt(x.momentum)}%</td><td>${fmt(x.adx,1)}</td>
+ <td>${fmt(x.buyPressure,0)}%</td><td class="${x.trend==="YUKARI"?"good":"bad"}">${x.trend}</td>
+ <td><b>${x.score}</b></td><td><span class="pill ${stateCls(x.state)}">${x.state}</span></td></tr>`).join(""):"<tr><td colspan='11'>Bu grupta şu an hisse yok.</td></tr>";
+}
+async function load(){
+ try{
+  const r=await fetch("/api/scan",{cache:"no-store"}); DATA=await r.json();
+  document.querySelector("#k1").textContent=DATA.total;
+  document.querySelector("#k2").textContent=DATA.newRise.length;
+  document.querySelector("#k3").textContent=DATA.volume.length;
+  document.querySelector("#k4").textContent=DATA.strong.length;
+  const t=DATA.updatedAt?new Date(DATA.updatedAt).toLocaleTimeString("tr-TR"):"-";
+  document.querySelector("#status").textContent=`Son güncelleme: ${t}${DATA.scanning?" • tarama sürüyor":""} • 60 sn'de bir yenilenir`;
+  render();
+ }catch(e){document.querySelector("#status").textContent="Veri bağlantısı kurulamadı: "+e.message}
+}
+document.querySelectorAll(".tab").forEach(b=>b.onclick=()=>{document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");current=b.dataset.tab;render()});
+load();setInterval(load,60000);
+</script>
+</body></html>
