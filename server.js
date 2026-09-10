@@ -11,7 +11,37 @@ const PORT = process.env.PORT || 3000;
 app.use(express.static("public"));
 app.use(express.json());
 
-const symbols = JSON.parse(fs.readFileSync("./symbols.json","utf8"));
+const localSymbols=JSON.parse(fs.readFileSync("./symbols.json","utf8"));
+
+async function loadSymbols(){
+    try{
+        const url="https://raw.githubusercontent.com/ahmeterenodaci/Istanbul-Stock-Exchange--BIST--including-symbols-and-logos/main/without_logo.json";
+        const r=await fetch(url,{
+            headers:{
+                "User-Agent":"Mozilla/5.0"
+            }
+        });
+
+        if(!r.ok) throw new Error("BIST liste HTTP "+r.status);
+
+        const data=await r.json();
+
+        const remoteSymbols=data
+            .map(x=>String(x.symbol||"").trim().toUpperCase())
+            .filter(x=>x.length>=3&&x.length<=6);
+
+        const symbols=[...new Set([...remoteSymbols,...localSymbols])];
+
+        console.log("BIST sembol sayisi:",symbols.length);
+
+        return symbols;
+    }catch(err){
+        console.log("BIST otomatik liste alinamadi, symbols.json kullaniliyor:",err.message);
+        return localSymbols;
+    }
+}
+
+const symbols=await loadSymbols();
 
 const sleep = ms => new Promise(r=>setTimeout(r,ms));
 
