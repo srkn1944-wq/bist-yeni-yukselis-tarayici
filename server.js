@@ -185,7 +185,7 @@ app.get("/api/scan", async (req,res)=>{
   res.json({updatedAt:cache.time,scanning:cache.scanning,total:data.length,newRise,volume,strong,gainers,losers});
 });
 app.get("/",(req,res)=>{
-    res.sendFile(path.join(__dirname,"public","Index.html"));
+    res.sendFile(path.join(__dirname,"public","İndex.html"));
 });
 
 app.listen(PORT,()=>console.log(`BIST tarayıcı http://localhost:${PORT}`));
