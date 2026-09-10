@@ -148,19 +148,60 @@ const volRatio=volAvg&&currentVol?currentVol/volAvg:null;
   const buyPressure=(buyBars/recent.length)*100;
 
   let score=0;
-  if(volRatio!=null) score += Math.min(30, Math.max(0,(volRatio-1)*30));
-  if(newTrend) score+=25; else if(trendUp) score+=15;
-  if(momCross) score+=15; else if(mom>0) score+=8;
-  if(rsiCross) score+=10; else if(rr>=50 && rr<=65) score+=7;
-  if(buyPressure>=67) score+=10; else if(buyPressure>=50) score+=5;
-  if(ax>=20) score+=10; else if(ax>=15) score+=5;
-  score=Math.round(Math.min(100,score));
 
-  let state="İZLE";
-  if(score>=75 && (dayPct??0) < 5) state="GÜÇLÜ YENİ YÜKSELİŞ";
-  else if(score>=60 && (dayPct??0) < 5) state="YENİ YÜKSELİŞ";
-  else if(score>=70) state="GÜÇLÜ AL";
-  if(mom<0 && rr<50) state="ZAYIFLAMA";
+// HACİM - erken hareketi destekle
+if(volRatio!=null){
+    if(volRatio>=3.0) score+=25;
+    else if(volRatio>=2.0) score+=22;
+    else if(volRatio>=1.5) score+=18;
+    else if(volRatio>=1.2) score+=10;
+}
+
+// TREND - yeni başlayan trend daha değerli
+if(newTrend) score+=25;
+else if(trendUp) score+=12;
+
+// MOMENTUM - sıfırı yeni kırması erken sinyal
+if(momCross) score+=18;
+else if(mom>0) score+=8;
+
+// RSI - 50 üzeri yeni güçlenme
+if(rsiCross) score+=15;
+else if(rr>=50 && rr<=62) score+=10;
+else if(rr>62 && rr<=68) score+=5;
+
+// ALIŞ BASKISI
+if(buyPressure>=67) score+=10;
+else if(buyPressure>=50) score+=5;
+
+// ADX
+if(ax>=25) score+=10;
+else if(ax>=20) score+=7;
+else if(ax>=15) score+=4;
+
+// ÇOK YÜKSELMİŞ HİSSELERİ GERİ PLANA AT
+if((dayPct??0)>=5) score-=25;
+else if((dayPct??0)>=3.5) score-=15;
+
+// AŞIRI RSI CEZASI
+if(rr!=null && rr>=75) score-=15;
+else if(rr!=null && rr>=70) score-=8;
+
+score=Math.round(Math.max(0,Math.min(100,score)));
+
+let state="İZLE";
+
+const earlyMove=(dayPct??0)<3.5;
+const strongSetup=trendUp && mom>0 && rr>=50 && rr<70 && volRatio!=null && volRatio>=1.2;
+
+if(score>=80 && newTrend && earlyMove)
+    state="GÜÇLÜ YENİ YÜKSELİŞ";
+else if(score>=65 && (newTrend || momCross || rsiCross) && earlyMove)
+    state="YENİ YÜKSELİŞ";
+else if(score>=75 && strongSetup)
+    state="GÜÇLÜ AL";
+else if(mom<0 && rr<50)
+    state="ZAYIFLAMA";
 
   return {
     symbol,
