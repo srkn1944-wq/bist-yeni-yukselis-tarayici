@@ -95,8 +95,11 @@ function evaluate(symbol, intraday, daily){
   const prevDaily=drows.length>=2 ? drows.at(-2).c : intraday.meta.chartPreviousClose;
   const dayPct=pct(last.c,prevDaily);
 
-  const volAvg=sma(vols.slice(0,-1),20);
-  const volRatio=volAvg ? last.v/volAvg : null;
+  const validVols=vols.filter(v=>Number.isFinite(v)&&v>0);
+const currentVol=validVols.length>0?validVols.at(-1):null;
+const previousVols=validVols.slice(0,-1);
+const volAvg=previousVols.length>=20?sma(previousVols,20):null;
+const volRatio=volAvg&&currentVol?currentVol/volAvg:null;
   const rr=rsi(closes,14);
   const rrPrev=rsi(closes.slice(0,-1),14);
   const mom=momentum(closes,10);
