@@ -180,5 +180,7 @@ app.get("/api/scan", async (req,res)=>{
   const losers=[...data].filter(x=>(x.dayPct??0)<0).sort((a,b)=>a.dayPct-b.dayPct);
   res.json({updatedAt:cache.time,scanning:cache.scanning,total:data.length,newRise,volume,strong,gainers,losers});
 });
-
+app.get("/",(req,res)=>{
+    res.sendFile(process.cwd()+"/public/index.html");
+});
 app.listen(PORT,()=>console.log(`BIST tarayıcı http://localhost:${PORT}`));
