@@ -189,20 +189,20 @@ else if(rr!=null && rr>=70) score-=8;
 
 score=Math.round(Math.max(0,Math.min(100,score)));
 
+
 let state="İZLE";
 
 const earlyMove=(dayPct??0)<3.5;
 const strongSetup=trendUp && mom>0 && rr>=50 && rr<70 && volRatio!=null && volRatio>=1.2;
 
-if(score>=80 && newTrend && earlyMove)
+if(score>=80 && trendUp && newTrend && earlyMove)
     state="GÜÇLÜ YENİ YÜKSELİŞ";
-else if(score>=65 && (newTrend || momCross || rsiCross) && earlyMove)
+else if(score>=65 && trendUp && (newTrend || momCross || rsiCross) && earlyMove)
     state="YENİ YÜKSELİŞ";
 else if(score>=75 && strongSetup)
     state="GÜÇLÜ AL";
 else if(mom<0 && rr<50)
     state="ZAYIFLAMA";
-
   return {
     symbol,
     price:+last.c.toFixed(2),
